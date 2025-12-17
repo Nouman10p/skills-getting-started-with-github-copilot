@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
         `;
 
-        // Participants section (bulleted list)
+        // Participants section (list with delete icons)
         const participantsSection = document.createElement("div");
         participantsSection.className = "participants-section";
 
@@ -41,7 +41,24 @@ document.addEventListener("DOMContentLoaded", () => {
         if (details.participants && details.participants.length > 0) {
           details.participants.forEach((participant) => {
             const li = document.createElement("li");
-            li.textContent = participant;
+            li.className = "participant-item";
+
+            // Participant email span
+            const emailSpan = document.createElement("span");
+            emailSpan.textContent = participant;
+            li.appendChild(emailSpan);
+
+            // Delete icon
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "delete-participant-btn";
+            deleteBtn.title = "Remove participant";
+            deleteBtn.innerHTML = "&#128465;"; // Trash can icon
+            deleteBtn.addEventListener("click", async (e) => {
+              e.stopPropagation();
+              await unregisterParticipant(name, participant);
+            });
+            li.appendChild(deleteBtn);
+
             list.appendChild(li);
           });
         } else {
@@ -89,6 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        fetchActivities();
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
@@ -107,6 +125,24 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Error signing up:", error);
     }
   });
+
+  // Unregister participant function
+  async function unregisterParticipant(activityName, email) {
+    if (!confirm(`Remove ${email} from ${activityName}?`)) return;
+    try {
+      const response = await fetch(`/activities/${encodeURIComponent(activityName)}/signup?email=${encodeURIComponent(email)}`, {
+        method: "DELETE"
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        alert(data.detail || "Failed to remove participant.");
+      }
+      // Refresh activities list
+      fetchActivities();
+    } catch (err) {
+      alert("Error removing participant.");
+    }
+  }
 
   // Initialize app
   fetchActivities();

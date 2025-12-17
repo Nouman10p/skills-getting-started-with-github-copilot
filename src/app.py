@@ -79,9 +79,16 @@ activities = {
 
 
 
+from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi import Request
+
 @app.get("/")
-def root():
-    return RedirectResponse(url="/static/index.html")
+def root(request: Request):
+    # If browser, redirect; if API client, return JSON
+    accept = request.headers.get("accept", "")
+    if "text/html" in accept:
+        return RedirectResponse(url="/static/index.html")
+    return {"message": "Welcome to the Mergington High School Activities API!"}
 
 
 @app.get("/activities")
